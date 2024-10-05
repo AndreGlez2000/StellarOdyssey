@@ -14,7 +14,39 @@ const StarField = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
 
-    // Agregar manejo de errores en la carga del archivo CSV
+    // Crear una esfera que represente la Tierra
+    const earthGeometry = new THREE.SphereGeometry(1, 32, 32);  // Esfera de radio 1, con 32 segmentos
+
+    // Generar colores aleatorios (verde, azul, blanco) para cada vértice de la esfera
+    const colors = [];
+    const color = new THREE.Color();
+    
+    // Recorre cada vértice de la esfera y asigna un color aleatorio entre verde, azul y blanco
+    for (let i = 0; i < earthGeometry.attributes.position.count; i++) {
+      const randomColor = Math.random();
+      if (randomColor < 0.33) {
+        color.set(0x008000);  // Verde (tierra)
+      } else if (randomColor < 0.66) {
+        color.set(0x0000ff);  // Azul (océano)
+      } else {
+        color.set(0xffffff);  // Blanco (nubes/hielo)
+      }
+      colors.push(color.r, color.g, color.b);
+    }
+
+    earthGeometry.setAttribute(
+      'color',
+      new THREE.Float32BufferAttribute(colors, 3)
+    );
+
+    // Aplicar material que soporte vértices de colores
+    const earthMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });  
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);  // Crear la malla de la esfera con los colores
+    scene.add(earth);  // Añadir la Tierra a la escena
+
+    camera.position.z = 5;  // Alejar la cámara para ver la Tierra
+
+    // Cargar los datos estelares y procesarlos
     d3.csv("/data/gaia_stars.csv")
       .then(data => {
         console.log("Datos cargados correctamente:", data);
@@ -39,38 +71,30 @@ const StarField = () => {
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
 
-        // Función de animación
-        const animate = () => {
-          requestAnimationFrame(animate);
+        // Función de animación para el campo estelar
+        const animateStars = () => {
+          requestAnimationFrame(animateStars);
           stars.rotation.y += 0.001;  // Rotar suavemente el campo estelar
           renderer.render(scene, camera);
         };
 
-        animate();
+        animateStars();
       })
       .catch(error => {
         // Manejo de errores si la carga falla
         console.error("Error al cargar el archivo CSV:", error);
       });
 
-    // Agregar un cubo para verificar que Three.js funciona
-    const geometry = new THREE.BoxGeometry(1, 1, 1);  // Geometría del cubo
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });  // Material verde
-    const cube = new THREE.Mesh(geometry, material);  // Crear el cubo
-    scene.add(cube);  // Añadir el cubo a la escena
-
-    camera.position.z = 5;  // Alejar la cámara para ver el cubo
-
-    // Animar el cubo
-    const animateCube = () => {
-      requestAnimationFrame(animateCube);
-      cube.rotation.x += 0.01;  // Rotar el cubo en el eje X
-      cube.rotation.y += 0.01;  // Rotar el cubo en el eje Y
+    // Animar la Tierra para que gire sobre su propio eje
+    const animateEarth = () => {
+      requestAnimationFrame(animateEarth);
+      earth.rotation.y += 0.001;  // Rotar la Tierra en su eje Y (simula la rotación de la Tierra)
       renderer.render(scene, camera);
     };
 
-    animateCube();
+    animateEarth();
 
+    // Limpiar el renderizador al desmontar el componente
     return () => {
       mountRef.current.removeChild(renderer.domElement);
     };
