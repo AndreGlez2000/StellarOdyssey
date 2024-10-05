@@ -101,7 +101,7 @@ const StarField = () => {
       camera.position.z = zoomLevel;
     });
 
-    // Limpiar el renderizador al desmontar el componente
+    // Limpiar el renderizador
     // return () => {
     //   mountRef.current.removeChild(renderer.domElement);
     // };
