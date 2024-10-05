@@ -1,8 +1,8 @@
-// src/components/StarField.js
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import * as d3 from "d3";
 import Exoplanet from "./Exoplanet";
+import star_texture from "../textures/star_texture.png";
 
 const StarField = () => {
   const mountRef = useRef(null);
@@ -34,14 +34,25 @@ const StarField = () => {
         });
 
         starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3 });
+
+        // Cargar textura
+        const textureLoader = new THREE.TextureLoader();
+        const starTexture = textureLoader.load(star_texture); // Cambia la ruta de la textura
+
+        const starMaterial = new THREE.PointsMaterial({ 
+          size: 0.3, 
+          sizeAttenuation: true,
+          map: starTexture,
+          alphaTest: 0.5 // Ajusta según sea necesario para hacer la textura más transparente
+        });
+
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
 
         // Animación del campo estelar
         const animateStars = () => {
           requestAnimationFrame(animateStars);
-          stars.rotation.y += 0.001;
+          //stars.rotation.y += 0.001;
           renderer.render(scene, camera);
         };
 
@@ -104,6 +115,7 @@ const StarField = () => {
         orbitRadius={3} // Radio de la órbita
         orbitSpeed={0.01} // Velocidad de la órbita
       />
+
       <Exoplanet
         scene={sceneRef.current}
         size={1.5}
