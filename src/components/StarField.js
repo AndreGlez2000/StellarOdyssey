@@ -5,6 +5,7 @@ import * as d3 from "d3";
 
 const StarField = () => {
   const mountRef = useRef(null);
+  const sliderRef = useRef(null);
 
   useEffect(() => {
     // Configuración básica de la escena Three.js
@@ -94,10 +95,16 @@ const StarField = () => {
 
     animateEarth();
 
+    // Add event listener to slider
+    sliderRef.current.addEventListener('input', (event) => {
+      const zoomLevel = event.target.value;
+      camera.position.z = zoomLevel;
+    });
+
     // Limpiar el renderizador al desmontar el componente
-    return () => {
-      mountRef.current.removeChild(renderer.domElement);
-    };
+    // return () => {
+    //   mountRef.current.removeChild(renderer.domElement);
+    // };
   }, []);
 
   // Función para convertir RA y Dec a coordenadas cartesianas (x, y, z)
@@ -113,7 +120,19 @@ const StarField = () => {
     return { x, y, z };
   }
 
-  return <div ref={mountRef} />;
+  return (
+    <div>
+      <div ref={mountRef} />
+      <input
+        ref={sliderRef}
+        type="range"
+        min="1"
+        max="100"
+        defaultValue="5"
+        style={{ position: 'absolute', top: '10px', left: '10px' }}
+      />
+    </div>
+  );
 };
 
 export default StarField;
