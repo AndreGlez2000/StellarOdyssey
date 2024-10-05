@@ -2,54 +2,60 @@
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-const Exoplanet = ({ scene, size, colors, position, rotationSpeed }) => {
+const Exoplanet = ({ scene, size, colors, position, shouldRotate }) => {
   const planetRef = useRef(null);
 
   useEffect(() => {
-    // Crear una esfera que represente el exoplaneta
-    const geometry = new THREE.SphereGeometry(size, 32, 32); // Tamaño basado en el prop 'size'
+    // Crear una esfera que represente el planeta
+    const planetGeometry = new THREE.SphereGeometry(size, 32, 32); // Esfera del tamaño pasado por props
 
-    // Generar colores aleatorios para cada vértice de la esfera
-    const colorArray = [];
+    // Generar colores personalizados para cada vértice de la esfera
+    const planetColors = [];
     const color = new THREE.Color();
 
-    // Asigna colores aleatorios basados en el array de colores proporcionado
-    for (let i = 0; i < geometry.attributes.position.count; i++) {
+    for (let i = 0; i < planetGeometry.attributes.position.count; i++) {
       const randomColor = Math.random();
-      const selectedColor = randomColor < 0.5 ? colors[0] : colors[1]; // Escoge entre los dos colores
-      color.set(selectedColor);
-      colorArray.push(color.r, color.g, color.b);
+      if (randomColor < 0.33) {
+        color.set(colors[0]); // Primer color (ej. tierra)
+      } else if (randomColor < 0.66) {
+        color.set(colors[1]); // Segundo color (ej. océano)
+      } else {
+        color.set(colors[2]); // Tercer color (ej. nubes)
+      }
+      planetColors.push(color.r, color.g, color.b);
     }
 
-    geometry.setAttribute(
-      'color',
-      new THREE.Float32BufferAttribute(colorArray, 3)
+    planetGeometry.setAttribute(
+      "color",
+      new THREE.Float32BufferAttribute(planetColors, 3)
     );
 
     // Aplicar material que soporte vértices de colores
-    const material = new THREE.MeshBasicMaterial({ vertexColors: true });
-    const planetMesh = new THREE.Mesh(geometry, material);
-    planetMesh.position.set(...position); // Usa la posición proporcionada
+    const planetMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
+    // Posicionar el planeta según las props
+    planetMesh.position.set(position.x, position.y, position.z);
+
+    scene.add(planetMesh); // Añadir el planeta a la escena
     planetRef.current = planetMesh;
 
-    // Añadir el exoplaneta a la escena
-    scene.add(planetMesh);
-
-    // Función de animación para girar el exoplaneta
+    // Función de animación para girar el planeta si shouldRotate es true
     const animatePlanet = () => {
+      if (shouldRotate) {
+        planetMesh.rotation.y += 0.01; // Rota el planeta sobre su eje Y
+      }
       requestAnimationFrame(animatePlanet);
-      planetMesh.rotation.y += rotationSpeed; // Rota el exoplaneta según 'rotationSpeed'
     };
 
-    animatePlanet();
+    animatePlanet(); // Iniciar la animación
 
     return () => {
       scene.remove(planetMesh); // Limpiar al desmontar
     };
-  }, [scene, size, colors, position, rotationSpeed]);
+  }, [scene, size, colors, position, shouldRotate]);
 
-  return null; // Este componente no devuelve nada
+  return null;
 };
 
 export default Exoplanet;

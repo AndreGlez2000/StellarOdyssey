@@ -2,16 +2,15 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import * as d3 from "d3";
-import Earth from "./Earth";
-import Sun from "./Sun"; // Importa el componente Sun
+import Exoplanet from "./Exoplanet";
 
 const StarField = () => {
   const mountRef = useRef(null);
   const sliderRef = useRef(null);
-  const sceneRef = useRef(new THREE.Scene()); // Usar ref para la escena
+  const sceneRef = useRef(new THREE.Scene());
 
   useEffect(() => {
-    const scene = sceneRef.current; // Escena para todo
+    const scene = sceneRef.current;
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -42,7 +41,7 @@ const StarField = () => {
         // Animación del campo estelar
         const animateStars = () => {
           requestAnimationFrame(animateStars);
-          stars.rotation.y += 0.001; // Rotar suavemente
+          stars.rotation.y += 0.001;
           renderer.render(scene, camera);
         };
 
@@ -55,10 +54,6 @@ const StarField = () => {
     // Animar la escena
     const animate = () => {
       requestAnimationFrame(animate);
-      if (scene.children.length > 0) {
-        scene.children[0].rotation.y += 0.001; // Rotación de la Tierra
-        scene.children[1].rotation.y += 0.001; // Rotación del Sol
-      }
       renderer.render(scene, camera);
     };
 
@@ -98,8 +93,23 @@ const StarField = () => {
         defaultValue="5"
         style={{ position: "absolute", top: "10px", left: "10px" }}
       />
-      <Earth scene={sceneRef.current} /> {/* Renderiza Earth */}
-      <Sun scene={sceneRef.current} /> {/* Renderiza Sun */}
+      
+      {/* Crear y renderizar planetas usando el componente Exoplanet */}
+      <Exoplanet
+        scene={sceneRef.current}
+        size={1}
+        colors={[0x008000, 0x0000ff, 0xffffff]} // Verde, azul, blanco
+        position={{ x: 0, y: 0, z: 0 }} // Posición de la Tierra
+        shouldRotate={true} // Rotación habilitada
+      />
+      <Exoplanet
+        scene={sceneRef.current}
+        size={1.5}
+        colors={[0xffcc00, 0xff9900, 0xffdd00]} // Amarillo, naranja
+        position={{ x: 3, y: 0, z: 0 }} // Posición del Sol
+        shouldRotate={true} // Rotación habilitada para el Sol
+      />
+      {/* Añadir más planetas si es necesario */}
     </div>
   );
 };
