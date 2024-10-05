@@ -2,8 +2,9 @@
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-const Exoplanet = ({ scene, size, colors, position, shouldRotate }) => {
+const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed }) => {
   const planetRef = useRef(null);
+  let angle = 0; // Ángulo inicial para la órbita
 
   useEffect(() => {
     // Crear una esfera que represente el planeta
@@ -34,18 +35,26 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate }) => {
     const planetMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
-    // Posicionar el planeta según las props
+    // Posicionar el planeta en su posición inicial
     planetMesh.position.set(position.x, position.y, position.z);
 
     scene.add(planetMesh); // Añadir el planeta a la escena
     planetRef.current = planetMesh;
 
-    // Función de animación para girar el planeta si shouldRotate es true
+    // Función de animación para rotar y orbitar el planeta
     const animatePlanet = () => {
       if (shouldRotate) {
         planetMesh.rotation.y += 0.01; // Rota el planeta sobre su eje Y
       }
-      requestAnimationFrame(animatePlanet);
+
+      // Actualizar el ángulo para la órbita
+      angle += orbitSpeed;
+      const x = orbitRadius * Math.cos(angle); // Calcular la nueva posición en X
+      const z = orbitRadius * Math.sin(angle); // Calcular la nueva posición en Z
+      // Mover el planeta en su órbita
+      planetMesh.position.set(x, position.y, z);
+      
+      requestAnimationFrame(animatePlanet); // Continuar la animación
     };
 
     animatePlanet(); // Iniciar la animación
@@ -53,7 +62,7 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate }) => {
     return () => {
       scene.remove(planetMesh); // Limpiar al desmontar
     };
-  }, [scene, size, colors, position, shouldRotate]);
+  }, [scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed]);
 
   return null;
 };

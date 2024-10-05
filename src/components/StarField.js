@@ -34,7 +34,7 @@ const StarField = () => {
         });
 
         starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3 });
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
 
@@ -99,17 +99,30 @@ const StarField = () => {
         scene={sceneRef.current}
         size={1}
         colors={[0x008000, 0x0000ff, 0xffffff]} // Verde, azul, blanco
-        position={{ x: 0, y: 0, z: 0 }} // Posición de la Tierra
+        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
         shouldRotate={true} // Rotación habilitada
+        orbitRadius={3} // Radio de la órbita
+        orbitSpeed={0.01} // Velocidad de la órbita
       />
       <Exoplanet
         scene={sceneRef.current}
         size={1.5}
         colors={[0xffcc00, 0xff9900, 0xffdd00]} // Amarillo, naranja
-        position={{ x: 3, y: 0, z: 0 }} // Posición del Sol
-        shouldRotate={true} // Rotación habilitada para el Sol
+        position={{ x: 0, y: 0, z: 0 }} // Posición del Sol (no orbita)
+        shouldRotate={true} // Rotación habilitada
+        orbitRadius={0} // Sin órbita (el Sol está en el centro)
+        orbitSpeed={0} // Sin movimiento orbital
       />
-      {/* Añadir más planetas si es necesario */}
+
+      <Exoplanet
+        scene={sceneRef.current}
+        size={0.5}
+        colors={[0x9966ff, 0x0000ff, 0xffffff]} // Morado, azul, blanco
+        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
+        shouldRotate={true} // Rotación habilitada
+        orbitRadius={2} // Radio de la órbita
+        orbitSpeed={0.02} // Velocidad de la órbita
+      />
     </div>
   );
 };
