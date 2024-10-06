@@ -1,14 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as d3 from "d3";
 import Exoplanet from "./Exoplanet";
 import star_texture from "../textures/star_texture.png";
+import SolarSystem from "./SolarSystem";
 
 const StarField = () => {
   const mountRef = useRef(null);
   const sliderRef = useRef(null);
   const sceneRef = useRef(new THREE.Scene());
+  const cameraRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false); // Estado para controlar la visibilidad del menú
+  const [ssystemVisible, setSSystemVisible] = useState(true);
   const [selectedPlanet, setSelectedPlanet] = useState(""); // Estado para almacenar el planeta seleccionado
   const [exoplanets, setExoplanets] = useState([]);
 
@@ -19,8 +23,15 @@ const StarField = () => {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
+    
+    camera.position.z = 250;
+    cameraRef.current = camera;
 
-    camera.position.z = 5;
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+
 
     d3.csv("/data/PS_2024.10.05_15.14.56.csv").then(data => {
       setExoplanets(data);
@@ -40,12 +51,14 @@ const StarField = () => {
           const parallax = parseFloat(star.parallax);
 
           const { x, y, z } = raDecToCartesian(ra, dec, parallax);
-          starVertices.push(x, y, z);
+          starVertices.push(x,y,z);
         });
 
-        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        starGeometry.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(starVertices,3)
+        );
 
-        // Cargar textura
         const textureLoader = new THREE.TextureLoader();
         const starTexture = textureLoader.load(star_texture);
 
@@ -53,10 +66,10 @@ const StarField = () => {
           size: 0.3,
           sizeAttenuation: true,
           map: starTexture,
-          alphaTest: 0.5
-        });
+          alphaTest: 0.5,
+        })
 
-        const stars = new THREE.Points(starGeometry, starMaterial);
+        const stars = new THREE.Points(starGeometry,starMaterial);
         scene.add(stars);
 
         // Animación del campo estelar
@@ -71,10 +84,19 @@ const StarField = () => {
         console.error("Error al cargar el archivo CSV:", error);
       });
 
+    const animate = () => {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene,camera);
+    };
+
+    animate();
+
     // Añadir control de zoom con slider
     sliderRef.current.addEventListener("input", event => {
       const zoomLevel = event.target.value;
-      camera.position.z = zoomLevel;
+      camera.fov = zoomLevel;
+      camera.updateProjectionMatrix();
     });
 
     return () => {
@@ -85,6 +107,13 @@ const StarField = () => {
   const handleButtonClick = (planet) => {
     setSelectedPlanet(planet);
     setMenuVisible(true);
+    setSSystemVisible(false);
+    
+    if (cameraRef.current) {
+      cameraRef.current.position.set(5, 5, 5); // Cambia la posición de la cámara
+      //cameraRef.current.lookAt(0, 0, 0); // Apuntar hacia el origen
+    }
+
     console.log('Boton ${planet.name} clicado');
   };
 
@@ -98,6 +127,38 @@ const StarField = () => {
     const z = distance * Math.sin(decRad);
 
     return { x, y, z };
+  }
+
+  function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
+  function reverseString(str)
+  {
+    return str.split('').reverse().join('');
+  }
+
+  const stringToColour = (str) => {
+    let hash = 0;
+    str.split('').forEach(char=> {
+      hash = char.charCodeAt(0) + ((hash << 5) - hash)
+    })
+    let colour = '#'
+    for(let i = 0;i<3;i++){
+      const value = (hash >> (i * 8)) & 0xff
+      colour += value.toString(16).padStart(2,'0')
+    }
+    return colour
+  }
+
+  function getFirstHalf(word) {
+    const halfLength = Math.floor(word.length / 2); // Redondea hacia abajo si la longitud es impar
+    return word.substring(0, halfLength);
   }
 
   return (
@@ -187,6 +248,11 @@ const StarField = () => {
           <button 
             onClick={() => {
               setMenuVisible(false); // Cerrar menú
+              setSSystemVisible(true);
+              if (cameraRef.current) {
+                cameraRef.current.position.set(150, 150, 150); // Cambia la posición de la cámara
+                //cameraRef.current.lookAt(0, 0, 0); // Apuntar hacia el origen
+              }
               console.log("Menú cerrado"); // Log para depuración
             }}
             style={{
@@ -204,35 +270,22 @@ const StarField = () => {
       )}
 
       {/* Crear y renderizar planetas usando el componente Exoplanet */}
-      <Exoplanet
-        scene={sceneRef.current}
-        size={1}
-        colors={[0x008000, 0x0000ff, 0xffffff]} // Verde, azul, blanco
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={3} // Radio de la órbita
-        orbitSpeed={0.01} // Velocidad de la órbita
-      />
-
-      <Exoplanet
-        scene={sceneRef.current}
-        size={1.5}
-        colors={[0xffcc00, 0xff9900, 0xffdd00]} // Amarillo, naranja
-        position={{ x: 0, y: 0, z: 0 }} // Posición del Sol (no orbita)
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={0} // Sin órbita (el Sol está en el centro)
-        orbitSpeed={0} // Sin movimiento orbital
-      />
-
-      <Exoplanet
-        scene={sceneRef.current}
-        size={0.5}
-        colors={[0x9966ff, 0x0000ff, 0xffffff]} // Morado, azul, blanco
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={2} // Radio de la órbita
-        orbitSpeed={0.02} // Velocidad de la órbita
-      />
+      {ssystemVisible && <SolarSystem scene={sceneRef.current} />}
+      {!ssystemVisible && 
+            <Exoplanet
+            scene={sceneRef.current}
+            size={1.5}
+            colors={
+              [stringToColour(selectedPlanet.pl_name),
+                stringToColour(reverseString(selectedPlanet.pl_name)),
+                stringToColour(getFirstHalf(selectedPlanet.pl_name))
+              ]} // Amarillo, naranja
+            position={{ x: 0, y: 0, z: 0 }} // Posición del Sol (no orbita)
+            shouldRotate={true} // Rotación habilitada
+            orbitRadius={0} // Sin órbita (el Sol está en el centro)
+            orbitSpeed={0} // Sin movimiento orbital
+          />
+      }
     </div>
   );
 };
