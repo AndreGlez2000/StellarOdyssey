@@ -1,0 +1,40 @@
+/* src/components/MainMenu.css */
+.main-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: black;
+    color: white;
+  }
+  
+  .title {
+    font-size: 4rem;
+    font-weight: bold;
+    margin-bottom: 50px;
+    text-align: center;
+    color: #ffffff;
+  }
+  
+  .menu-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .menu-button {
+    background-color: #282c3400;
+    color: rgb(0, 0, 0);
+    font-size: 1.5rem;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .menu-button:hover {
+    background-color: #444a52;
+  }
+  
