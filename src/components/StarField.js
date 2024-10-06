@@ -48,8 +48,12 @@ const StarField = () => {
           size: 0.3, 
           sizeAttenuation: true,
           map: starTexture,
-          alphaTest: 0.5 // Ajusta según sea necesario para hacer la textura más transparente
+          alphaTest: 0.5,
         });
+
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
 
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);

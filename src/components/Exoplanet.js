@@ -32,7 +32,11 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, o
     );
 
     // Aplicar material que soporte vértices de colores
-    const planetMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const planetMaterial = new THREE.MeshStandardMaterial({ 
+      vertexColors: true,
+      emissive: 0xfffffff,
+      emissiveIntensity: 0.2 // Adjust the intensity as needed
+    });
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
     // Posicionar el planeta en su posición inicial
