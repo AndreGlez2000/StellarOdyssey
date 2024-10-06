@@ -20,9 +20,13 @@ const StarField = () => {
     );
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    mountRef.current.appendChild(renderer.domElement);
 
-    camera.position.z = 1000;
+    // Asegúrate de que mountRef.current esté disponible
+    if (mountRef.current) {
+      mountRef.current.appendChild(renderer.domElement);
+    }
+
+    camera.position.z = 250;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -66,9 +70,9 @@ const StarField = () => {
 
         const stars = new THREE.Points(starGeometry, starMaterial);
         scene.add(stars);
+
         const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(10, 10, 10);
-        scene.add(light);
+        
 
         const animateStars = () => {
           requestAnimationFrame(animateStars);
@@ -95,7 +99,10 @@ const StarField = () => {
     });
 
     return () => {
-      mountRef.current.removeChild(renderer.domElement);
+      // Asegúrate de que mountRef.current no sea null antes de remover el domElement
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
       window.removeEventListener("wheel", handleWheel);
     };
   }, []);
