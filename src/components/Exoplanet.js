@@ -1,8 +1,7 @@
-// src/components/Exoplanet.js
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 
-const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed }) => {
+const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed, inclination = 0, eccentricity = 0 }) => {
   const planetRef = useRef(null);
   let angle = 0; // Ángulo inicial para la órbita
 
@@ -32,7 +31,7 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, o
     );
 
     // Aplicar material que soporte vértices de colores
-    const planetMaterial = new THREE.MeshBasicMaterial({ vertexColors: true });
+    const planetMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, emissive: 0xffffff, emissiveIntensity: 0.3});
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
     // Posicionar el planeta en su posición inicial
@@ -49,11 +48,21 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, o
 
       // Actualizar el ángulo para la órbita
       angle += orbitSpeed;
-      const x = orbitRadius * Math.cos(angle); // Calcular la nueva posición en X
-      const z = orbitRadius * Math.sin(angle); // Calcular la nueva posición en Z
-      // Mover el planeta en su órbita
-      planetMesh.position.set(x, position.y, z);
-      
+
+      // Cálculos de la órbita con excentricidad e inclinación
+      const semiMajorAxis = orbitRadius * (1 + eccentricity);
+      const semiMinorAxis = orbitRadius * (1 - eccentricity);
+
+      const x = semiMajorAxis * Math.cos(angle);
+      const z = semiMinorAxis * Math.sin(angle);
+
+      // Aplicar la inclinación orbital
+      const y = z * Math.sin(inclination); // Ajuste del eje Y por inclinación
+      const adjustedZ = z * Math.cos(inclination);
+
+      // Mover el planeta en su órbita ajustada
+      planetMesh.position.set(x, y, adjustedZ);
+
       requestAnimationFrame(animatePlanet); // Continuar la animación
     };
 
@@ -62,7 +71,7 @@ const Exoplanet = ({ scene, size, colors, position, shouldRotate, orbitRadius, o
     return () => {
       scene.remove(planetMesh); // Limpiar al desmontar
     };
-  }, [scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed]);
+  }, [scene, size, colors, position, shouldRotate, orbitRadius, orbitSpeed, inclination, eccentricity]);
 
   return null;
 };
