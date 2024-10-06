@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import * as d3 from "d3";
 import Exoplanet from "./Exoplanet";
@@ -8,6 +8,10 @@ const StarField = () => {
   const mountRef = useRef(null);
   const sliderRef = useRef(null);
   const sceneRef = useRef(new THREE.Scene());
+  const [menuVisible, setMenuVisible] = useState(false); // Estado para controlar la visibilidad del menú
+  const [selectedPlanet, setSelectedPlanet] = useState(""); // Estado para almacenar el planeta seleccionado
+  const [exoplanets, setExoplanets] = useState([]);
+
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -17,6 +21,12 @@ const StarField = () => {
     mountRef.current.appendChild(renderer.domElement);
 
     camera.position.z = 5;
+
+    d3.csv("/data/PS_2024.10.05_15.14.56.csv").then(data => {
+      setExoplanets(data);
+    }).catch(error => {
+      console.error("Error al cargar el archivo csv: ",error);
+    });
 
     // Cargar datos de las estrellas
     d3.csv("/data/gaia_stars.csv")
@@ -37,13 +47,13 @@ const StarField = () => {
 
         // Cargar textura
         const textureLoader = new THREE.TextureLoader();
-        const starTexture = textureLoader.load(star_texture); // Cambia la ruta de la textura
+        const starTexture = textureLoader.load(star_texture);
 
-        const starMaterial = new THREE.PointsMaterial({ 
-          size: 0.3, 
+        const starMaterial = new THREE.PointsMaterial({
+          size: 0.3,
           sizeAttenuation: true,
           map: starTexture,
-          alphaTest: 0.5 // Ajusta según sea necesario para hacer la textura más transparente
+          alphaTest: 0.5
         });
 
         const stars = new THREE.Points(starGeometry, starMaterial);
@@ -52,7 +62,6 @@ const StarField = () => {
         // Animación del campo estelar
         const animateStars = () => {
           requestAnimationFrame(animateStars);
-          //stars.rotation.y += 0.001;
           renderer.render(scene, camera);
         };
 
@@ -61,14 +70,6 @@ const StarField = () => {
       .catch(error => {
         console.error("Error al cargar el archivo CSV:", error);
       });
-
-    // Animar la escena
-    const animate = () => {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    };
-
-    animate();
 
     // Añadir control de zoom con slider
     sliderRef.current.addEventListener("input", event => {
@@ -80,6 +81,12 @@ const StarField = () => {
       mountRef.current.removeChild(renderer.domElement);
     };
   }, []);
+
+  const handleButtonClick = (planet) => {
+    setSelectedPlanet(planet);
+    setMenuVisible(true);
+    console.log('Boton ${planet.name} clicado');
+  };
 
   function raDecToCartesian(ra, dec, parallax) {
     const raRad = (ra * Math.PI) / 180;
@@ -104,7 +111,98 @@ const StarField = () => {
         defaultValue="5"
         style={{ position: "absolute", top: "10px", left: "10px" }}
       />
-      
+      <div
+        id="Menu"
+        style={{
+          position: "absolute",
+          height: "200px",
+          overflowX: "hidden",
+          overflowY: "scroll",
+          top: "30px",
+          left: "10px",
+          backgroundColor: "#333",
+          color: "white",
+          padding: "20 px 10px 10px 10px",
+          borderRadius: "5px",
+          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        {exoplanets.map((planet, index) => (
+          <button
+            key={index}
+            onClick={() => handleButtonClick(planet)}
+            style={{
+              marginBottom: "5px", // Espacio entre los botones
+              backgroundColor: "#4CAF50",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            {planet.pl_name}
+          </button>
+        ))}
+      </div>
+
+      {/* Mostrar el menú si está visible */}
+      {menuVisible && (
+        <div
+          style={{
+            position: "absolute",
+            top: "200px",
+            left: "275px",
+            width: "275px",
+            backgroundColor: "#000",
+            color: "white",
+            padding: "10px",
+            borderStyle: "solid",
+            borderColor: "white",
+            borderRadius: "5px",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.5)",
+            textAlign: "justify",
+            textJustify: "inter-word",
+            hyphens: "auto",
+            fontSize: "small",
+            lineHeight: "0.8",
+            margin: "0"
+          }}
+        >
+          <h1>{selectedPlanet.pl_name}</h1>
+          <p>System name: {selectedPlanet.hostname}</p>
+          <p>Discovery method: {selectedPlanet.discoverymethod}</p>
+          <p>Year: {selectedPlanet.disc_year}</p>
+          <p>Orbit(days): {selectedPlanet.pl_orbper}</p>
+          <p>Radius(earth): {selectedPlanet.pl_rade}</p>
+          <p>RA: {selectedPlanet.rastr}</p>
+          <p>RA(deg): {selectedPlanet.ra}</p>
+          <p>Dec: {selectedPlanet.decstr}</p>
+          <p>Dec(deg): {selectedPlanet.dec}</p>
+          <p>Distance(pc): {selectedPlanet.sy_dist}</p>
+          <button 
+            onClick={() => {
+              setMenuVisible(false); // Cerrar menú
+              console.log("Menú cerrado"); // Log para depuración
+            }}
+            style={{
+              backgroundColor: "#f44336", // Rojo
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Cerrar Menú
+          </button>
+        </div>
+      )}
+
       {/* Crear y renderizar planetas usando el componente Exoplanet */}
       <Exoplanet
         scene={sceneRef.current}
