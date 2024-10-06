@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as d3 from "d3";
 import Exoplanet from "./Exoplanet";
 import star_texture from "../textures/star_texture.png";
+import Sun from "./Sun";
 
 const StarField = () => {
   const mountRef = useRef(null);
@@ -21,7 +23,20 @@ const StarField = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
 
-    camera.position.z = 5;
+    camera.position.z = 1000;
+
+    // Add OrbitControls for mouse-based camera control
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; // Enable damping (inertia)
+    controls.dampingFactor = 0.25; // Damping factor
+    controls.enableZoom = false; // Disable zooming
+
+    // Add event listener for mouse wheel
+    const handleWheel = (event) => {
+      camera.position.z += event.deltaY * 0.5; // Adjust the zoom speed as needed
+    };
+
+    window.addEventListener("wheel", handleWheel);
 
     // Cargar datos de las estrellas
     d3.csv("/data/gaia_stars.csv")
@@ -76,6 +91,7 @@ const StarField = () => {
     // Animar la escena
     const animate = () => {
       requestAnimationFrame(animate);
+      controls.update(); // Update controls
       renderer.render(scene, camera);
     };
 
@@ -89,6 +105,7 @@ const StarField = () => {
 
     return () => {
       mountRef.current.removeChild(renderer.domElement);
+      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 
@@ -116,15 +133,8 @@ const StarField = () => {
         style={{ position: "absolute", top: "10px", left: "10px" }}
       />
 
-      <Exoplanet
-        scene={sceneRef.current}
-        size={10}
-        colors={[0xffcc00, 0xff9900, 0xffdd00]} // Amarillo, naranja
-        position={{ x: 0, y: 0, z: 0 }} // Posición del Sol (no orbita)
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={0} // Sin órbita (el Sol está en el centro)
-        orbitSpeed={0} // Sin movimiento orbital
-      />
+      <Sun scene={sceneRef.current} />
+
       <Exoplanet
         scene={sceneRef.current}
         size={4}
@@ -142,7 +152,7 @@ const StarField = () => {
         colors={[0xff0000, 0xfffacd]} // Rojo, amarillo crema
         position={{ x: 0, y: 0, z: 0 }} // Posición inicial
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={6} // Radio medio de la órbita reducido
+        orbitRadius={50} // Radio medio de la órbita reducido
         orbitSpeed={0.005} // Velocidad de la órbita
         inclination={0.1} // Inclinación en radianes (~6 grados)
         eccentricity={0.1} // Excentricidad (similar a Marte)
@@ -153,7 +163,7 @@ const StarField = () => {
         colors={[0x8b4513, 0xffd700]} // Café, dorado
         position={{ x: 0, y: 0, z: 0 }} // Posición inicial
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={8} // Radio medio de la órbita reducido
+        orbitRadius={70} // Radio medio de la órbita reducido
         orbitSpeed={0.002} // Velocidad de la órbita
         inclination={0.3} // Inclinación en radianes (~17 grados)
         eccentricity={0.2} // Excentricidad (similar a Venus)
@@ -164,7 +174,7 @@ const StarField = () => {
         colors={[0x00ffff, 0x0000ff]} // Cian, azul
         position={{ x: 0, y: 0, z: 0 }} // Posición inicial
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={10} // Radio medio de la órbita reducido
+        orbitRadius={80} // Radio medio de la órbita reducido
         orbitSpeed={0.001} // Velocidad de la órbita
         inclination={0.2} // Inclinación en radianes (~11 grados)
         eccentricity={0.3} // Excentricidad (similar a Mercurio)
@@ -175,60 +185,40 @@ const StarField = () => {
         colors={[0x9932cc, 0xff69b4]} // Violeta, rosa
         position={{ x: 0, y: 0, z: 0 }} // Posición inicial
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={20} // Radio medio de la órbita reducido
+        orbitRadius={100} // Radio medio de la órbita reducido
         orbitSpeed={0.0005} // Velocidad de la órbita
         inclination={0.5} // Inclinación en radianes (~29 grados)
         eccentricity={0.4} // Excentricidad (similar a la Luna)
       />
       <Exoplanet
         scene={sceneRef.current}
-        size={0.05}
-        colors={[0x800080, 0xff1493]} // Púrpura, rosa intenso
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={30} // Radio medio de la órbita reducido
-        orbitSpeed={0.0001} // Velocidad de la órbita
-        inclination={0.6} // Inclinación en radianes (~34 grados)
-        eccentricity={0.5} // Excentricidad (similar a Plutón)
+        size={12} // Adjusted size for Saturn relative to the Sun
+        colors={[0xd2b48c, 0xffe4b5, 0xffd700]} // Tan, Navajo White, Gold
+        position={{ x: 0, y: 0, z: 0 }} // Initial position
+        shouldRotate={true} // Enable rotation
+        orbitRadius={100} // Adjusted orbit radius for Saturn
+        orbitSpeed={0.0002} // Adjusted orbit speed for Saturn
+        inclination={0.05} // Inclination in radians (~2.5 degrees)
+        eccentricity={0.056} // Eccentricity similar to Saturn
       />
       <Exoplanet
         scene={sceneRef.current}
-        size={1.5}
-        colors={[0xffcc00, 0xff9900, 0xffdd00]} // Amarillo, naranja
-        position={{ x: 0, y: 0, z: 0 }} // Posición del Sol (no orbita)
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={0} // Sin órbita (el Sol está en el centro)
-        orbitSpeed={0} // Sin movimiento orbital
-      />
-      <Exoplanet
-        scene={sceneRef.current}
-        size={1}
-        colors={[0x008000, 0x0000ff, 0xffffff]} // Verde, azul, blanco
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={4} // Radio medio de la órbita reducido
-        orbitSpeed={0.01} // Velocidad de la órbita
-        inclination={0.4} // Inclinación en radianes (~23 grados)
-        eccentricity={0.0167} // Excentricidad (similar a la Tierra)
-      />
-      <Exoplanet
-        scene={sceneRef.current}
-        size={0.5}
-        colors={[0xff0000, 0xfffacd]} // Rojo, amarillo crema
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
-        shouldRotate={true} // Rotación habilitada
-        orbitRadius={6} // Radio medio de la órbita reducido
-        orbitSpeed={0.005} // Velocidad de la órbita
-        inclination={0.1} // Inclinación en radianes (~6 grados)
-        eccentricity={0.1} // Excentricidad (similar a Marte)
+        size={12} // Adjusted size for Jupiter relative to the Sun
+        colors={[0xffa500, 0xffd700, 0xff4500]} // Orange, Gold, Red-Orange
+        position={{ x: 0, y: 0, z: 0 }} // Initial position
+        shouldRotate={true} // Enable rotation
+        orbitRadius={120} // Adjusted orbit radius for Jupiter
+        orbitSpeed={0.0008} // Adjusted orbit speed for Jupiter
+        inclination={0.05} // Inclination in radians (~3 degrees)
+        eccentricity={0.048} // Eccentricity similar to Jupiter
       />
       <Exoplanet
         scene={sceneRef.current}
         size={0.3}
         colors={[0x8b4513, 0xffd700]} // Café, dorado
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
+        position={{ x: 0, y: 0, z: 0 }} // Initial position
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={10} // Radio medio de la órbita reducido
+        orbitRadius={180} // Radio medio de la órbita reducido
         orbitSpeed={0.002} // Velocidad de la órbita
         inclination={0.3} // Inclinación en radianes (~17 grados)
         eccentricity={0.2} // Excentricidad (similar a Venus)
@@ -237,9 +227,9 @@ const StarField = () => {
         scene={sceneRef.current}
         size={0.2}
         colors={[0x00ffff, 0x0000ff]} // Cian, azul
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
+        position={{ x: 0, y: 0, z: 0 }} // Initial position
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={15} // Radio medio de la órbita reducido
+        orbitRadius={200} // Radio medio de la órbita reducido
         orbitSpeed={0.001} // Velocidad de la órbita
         inclination={0.2} // Inclinación en radianes (~11 grados)
         eccentricity={0.3} // Excentricidad (similar a Mercurio)
@@ -248,9 +238,9 @@ const StarField = () => {
         scene={sceneRef.current}
         size={0.1}
         colors={[0x9932cc, 0xff69b4]} // Violeta, rosa
-        position={{ x: 0, y: 0, z: 0 }} // Posición inicial
+        position={{ x: 0, y: 0, z: 0 }} // Initial position
         shouldRotate={true} // Rotación habilitada
-        orbitRadius={20} // Radio medio de la órbita reducido
+        orbitRadius={220} // Radio medio de la órbita reducido
         orbitSpeed={0.0005} // Velocidad de la órbita
         inclination={0.5} // Inclinación en radianes (~29 grados)
         eccentricity={0.4} // Excentricidad (similar a la Luna)
