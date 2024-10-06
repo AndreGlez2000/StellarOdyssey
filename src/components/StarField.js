@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
 import * as d3 from "d3";
 import Exoplanet from "./Exoplanet";
+
 import star_texture from "../textures/star_texture.png";
 
 const StarField = () => {
@@ -9,9 +10,14 @@ const StarField = () => {
   const sliderRef = useRef(null);
   const sceneRef = useRef(new THREE.Scene());
 
+  const cameraRef = useRef(null);
+  const raycaster = useRef(new THREE.Raycaster());
+  const mouse = useRef(new THREE.Vector2());
+
   useEffect(() => {
     const scene = sceneRef.current;
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    cameraRef.current = camera;
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
@@ -21,33 +27,30 @@ const StarField = () => {
     // Cargar datos de las estrellas
     d3.csv("/data/gaia_stars.csv")
       .then(data => {
-        const starGeometry = new THREE.BufferGeometry();
-        const starVertices = [];
-
+        const planeGeometry = new THREE.PlaneGeometry(1, 1); // Crear geometría de plano
+        
         data.forEach(star => {
           const ra = parseFloat(star.ra);
           const dec = parseFloat(star.dec);
           const parallax = parseFloat(star.parallax);
-
           const { x, y, z } = raDecToCartesian(ra, dec, parallax);
-          starVertices.push(x, y, z);
+
+          // Cargar textura
+          const textureLoader = new THREE.TextureLoader();
+          const starTexture = textureLoader.load(star_texture); // Cambia la ruta de la textura
+
+          const starMaterial = new THREE.MeshBasicMaterial({ 
+            size: 0.3, 
+            sizeAttenuation: true,
+            map: starTexture,
+            alphaTest: 0.5 // Ajusta según sea necesario para hacer la textura más transparente
+          });
+
+          const starMesh = new THREE.Mesh(planeGeometry, starMaterial);
+          starMesh.position.set(x, y, z);
+          //starMesh.loookAt(0, 0, 0); // Asegurarse de que el plano esté orientado correctamente
+          scene.add(starMesh);
         });
-
-        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-
-        // Cargar textura
-        const textureLoader = new THREE.TextureLoader();
-        const starTexture = textureLoader.load(star_texture); // Cambia la ruta de la textura
-
-        const starMaterial = new THREE.PointsMaterial({ 
-          size: 0.3, 
-          sizeAttenuation: true,
-          map: starTexture,
-          alphaTest: 0.5 // Ajusta según sea necesario para hacer la textura más transparente
-        });
-
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
 
         // Animación del campo estelar
         const animateStars = () => {
@@ -62,6 +65,30 @@ const StarField = () => {
         console.error("Error al cargar el archivo CSV:", error);
       });
 
+    var targetRef = new THREE.Vector3(0, 0, 0);
+    // Añadir evento de clic
+    const onClick = (event) => {
+      // Convertir coordenadas del mouse a el espacio de normalizado
+      mouse.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      // Actualizar el raycaster
+      raycaster.current.setFromCamera(mouse.current, camera);
+
+      // Calcular objetos interseccionados
+      const intersects = raycaster.current.intersectObjects(scene.children, true);
+
+      if (intersects.length > 0) {
+        const starPosition = intersects[0].point;
+        camera.position.set(starPosition.x, starPosition.y, starPosition.z + 5); // Mover la cámara a la posición de la estrella
+        targetRef = starPosition;
+        //camera.lookAt(starPosition); // Hacer que la cámara mire hacia la estrella
+      }
+    };
+
+    // Añadir el listener para el clic
+    renderer.domElement.addEventListener("click", onClick);
+
     // Animar la escena
     const animate = () => {
       requestAnimationFrame(animate);
@@ -73,7 +100,8 @@ const StarField = () => {
     // Añadir control de zoom con slider
     sliderRef.current.addEventListener("input", event => {
       const zoomLevel = event.target.value;
-      camera.position.z = zoomLevel;
+      camera.fov = zoomLevel;
+      camera.updateProjectionMatrix();
     });
 
     return () => {
@@ -99,9 +127,9 @@ const StarField = () => {
       <input
         ref={sliderRef}
         type="range"
-        min="1"
-        max="100"
-        defaultValue="5"
+        min="30"
+        max="178"
+        defaultValue="75"
         style={{ position: "absolute", top: "10px", left: "10px" }}
       />
       
